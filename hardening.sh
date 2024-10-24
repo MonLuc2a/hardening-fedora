@@ -1,51 +1,61 @@
 #!/bin/bash
 
 # Configuration des permissions des fichiers cron
-chmod 700 /etc/crontab
-chmod 700 /etc/cron.monthly
-chmod 700 /etc/cron.weekly
+chmod 600 /etc/at.deny
+chmod 600 /etc/cron.deny
+chmod 600 /etc/crontab
+chmod 700 /etc/cron.d
+chmod 700 /etc/cron.daily/
 chmod 700 /etc/cron.daily
 chmod 700 /etc/cron.hourly
-chmod 700 /etc/cron.d
-chmod 700 /etc/cron.deny
+chmod 700 /etc/cron.weekly
+chmod 700 /etc/cron.monthly
+
 
 # Activer et démarrer firewalld
 systemctl enable firewalld
 systemctl start firewalld
 
 # Définir la politique par défaut du pare-feu sur "drop"
-sudo firewall-cmd --set-default=drop
+firewall-cmd --set-default-zone=drop
 
 # Ajouter des protocoles pour IPv6 si nécessaire
-sudo firewall-cmd --add-protocol=ipv6-icmp --permanent
-sudo firewall-cmd --add-service=dhcpv6-client --permanent
+firewall-cmd --add-protocol=ipv6-icmp --permanent
+firewall-cmd --add-service=dhcpv6-client --permanent
+
+# Recharger les règles du pare-feu
+firewall-cmd --reload
 
 # Mettre à jour et redémarrer pour Secure Boot
-sudo dnf update -y
+dnf update -y
+
+# Ajouter les dépôts RPM Fusion
+dnf install -y https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+dnf install -y https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
 # Installer des extensions et applications nécessaires
-sudo dnf install -y ublock-origin keepassXC ffmpeg mozilla-openh264 lynis timeshift rkhunter gnome-tweaks usbguard
+dnf install -y keepassxc ffmpeg mozilla-openh264 lynis timeshift rkhunter gnome-tweaks usbguard
 
 # Configurer rkhunter
-sudo rkhunter --propupd
-sudo rkhunter --update
-sudo rkhunter --check --sk
+rkhunter --propupd
+rkhunter --update
+rkhunter --check --sk
 
 # Auditer le système avec Lynis
-sudo lynis audit system
+lynis audit system
 
 # Désactiver et masquer les services inutiles
 services=(pcscd.socket pcscd.service cups wpa_supplicant.service ModemManager.service bluetooth.service avahi-daemon.service nis-domainname.service sssd.service sssd-kcm.service rpcbind.service gssproxy.service nfs-client.target)
 for service in "${services[@]}"; do
-  sudo systemctl disable --now $service
-  sudo systemctl mask $service
+  systemctl disable --now $service
+  systemctl mask $service
 done
 
 # Modifier les paramètres de logind.conf
-sudo bash -c 'echo -e "NAutoVTs=0\nReserveVT=N" >> /etc/systemd/logind.conf'
+echo -e "NAutoVTs=0\nReserveVT=N" >> /etc/systemd/logind.conf
 
 # Créer un fichier de blacklist pour les modules inutiles
-sudo bash -c 'cat <<EOF > /etc/modprobe.d/custom-blacklist.conf
+cat <<EOF > /etc/modprobe.d/custom-blacklist.conf
 install dccp /bin/false
 install sctp /bin/false
 install rds /bin/false
@@ -85,10 +95,10 @@ install uvcvideo /bin/false
 install firewire-core /bin/false
 install thunderbolt /bin/false
 install snd_hda_intel /bin/false
-EOF'
+EOF
 
 # Modifier les paramètres de sysctl
-sudo bash -c 'cat <<EOF > /etc/sysctl.d/99-sysctl.conf
+cat <<EOF > /etc/sysctl.d/99-sysctl.conf
 fs.suid_dumpable = 0
 fs.protected_fifos = 2
 fs.protected_regular = 2
@@ -124,33 +134,37 @@ net.ipv4.tcp_rfc1337 = 1
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.conf.default.accept_redirects = 0
 net.ipv4.conf.all.send_redirects = 0
-EOF'
+EOF
 
 # Appliquer les paramètres sysctl
-sudo sysctl -p
+sysctl -p
 
 # Désactiver IPv6 si nécessaire
-sudo grubby --update-kernel=ALL --args="ipv6.disable=1"
+grubby --update-kernel=ALL --args="ipv6.disable=1"
 
 # Configurer NetworkManager pour la confidentialité IPv6
-sudo bash -c 'echo -e "[connection]\nipv6.ip6-privacy=2" >> /etc/NetworkManager/NetworkManager.conf'
+echo -e "[connection]\nipv6.ip6-privacy=2" >> /etc/NetworkManager/NetworkManager.conf
 
 # Modifier les limites de sécurité
-sudo bash -c 'echo -e "hard core 0" >> /etc/security/limits.conf'
+echo -e "hard core 0" >> /etc/security/limits.conf
 
 # Modifier l'ID de la machine
-sudo bash -c 'echo "b08dfa6083e7567a1921a715000001fb" > /var/lib/dbus/machine-id'
-sudo bash -c 'echo "b08dfa6083e7567a1921a715000001fb" > /etc/machine-id'
+echo "b08dfa6083e7567a1921a715000001fb" > /var/lib/dbus/machine-id
+echo "b08dfa6083e7567a1921a715000001fb" > /etc/machine-id
 
 # Configurer le nom d'hôte
-sudo bash -c 'echo -e "192.168.1.123 fedora fedora.local\n127.0.1.1 fedora fedora.local" >> /etc/hosts'
+echo -e "192.168.1.123 fedora fedora.local\n127.0.1.1 fedora fedora.local" >> /etc/hosts
 
 # Supprimer le compilateur
-sudo rm /usr/bin/as
+rm /usr/bin/as
 
 # Configurer les permissions des fichiers cron
-sudo chmod 700 /etc/crontab
-sudo chmod 700 /etc/cron.{monthly,weekly,daily,hourly,d}
+chmod 700 /etc/crontab
+chmod 700 /etc/cron.{monthly,weekly,daily,hourly,d}
 
 # Configurer usbguard
-sudo usbguard generate-policy | sudo tee /etc/usbguard/rules.conf
+systemctl enable usbguard
+systemctl start usbguard
+usbguard generate-policy | tee /etc/usbguard/rules.conf
+
+echo "Script de renforcement de sécurité terminé. Veuillez redémarrer votre système pour appliquer toutes les modifications."
