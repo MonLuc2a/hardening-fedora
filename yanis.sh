@@ -60,6 +60,11 @@ dnf install -y fail2ban
 systemctl enable fail2ban
 systemctl start fail2ban
 
+echo "Configuration de SSH..."
+sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config
+systemctl restart sshd
+
 #malware
 
 echo "Installation de ClamAV pour la protection contre les malwares..."
