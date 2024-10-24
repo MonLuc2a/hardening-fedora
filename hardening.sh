@@ -15,14 +15,6 @@ sudo firewall-cmd --add-service=dhcpv6-client --permanent
 sudo dnf update -y
 sudo reboot
 
-# Désinstaller les applications inutiles
-sudo dnf remove -y <liste_des_applications_inutiles>
-
-# Configurer Firefox pour plus de sécurité
-firefox -new-tab "about:config"
-# Modifier les paramètres suivants :
-# - media.ffmpeg.vaapi.enabled -> true
-
 # Installer des extensions et applications nécessaires
 sudo dnf install -y ublock-origin keepassXC ffmpeg mozilla-openh264 lynis timeshift rkhunter gnome-tweaks usbguard
 
@@ -154,12 +146,3 @@ sudo chmod 700 /etc/cron.{monthly,weekly,daily,hourly,d}
 
 # Configurer usbguard
 sudo usbguard generate-policy | sudo tee /etc/usbguard/rules.conf
-
-# Configurer sshd
-sudo nano /etc/ssh/sshd_config
-# Modifier les paramètres suivants :
-# - PermitRootLogin no
-# - PasswordAuthentication no
-
-# Redémarrer le système
-sudo reboot
