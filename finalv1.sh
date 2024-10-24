@@ -46,9 +46,6 @@ rkhunter --propupd
 rkhunter --update
 rkhunter --check --sk
 
-# Auditer le système avec Lynis
-lynis audit system
-
 # Configurer ClamAV
 freshclam
 systemctl enable clamd
