@@ -22,7 +22,6 @@ sudo firewall-cmd --add-service=dhcpv6-client --permanent
 
 # Mettre à jour et redémarrer pour Secure Boot
 sudo dnf update -y
-sudo reboot
 
 # Installer des extensions et applications nécessaires
 sudo dnf install -y ublock-origin keepassXC ffmpeg mozilla-openh264 lynis timeshift rkhunter gnome-tweaks usbguard
