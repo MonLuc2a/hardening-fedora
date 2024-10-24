@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Configuration des permissions des fichiers cron
+chmod 700 /etc/crontab
+chmod 700 /etc/cron.monthly
+chmod 700 /etc/cron.weekly
+chmod 700 /etc/cron.daily
+chmod 700 /etc/cron.hourly
+chmod 700 /etc/cron.d
+chmod 700 /etc/cron.deny
+
 # Activer et démarrer firewalld
 systemctl enable firewalld
 systemctl start firewalld
